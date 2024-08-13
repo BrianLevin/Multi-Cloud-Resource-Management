@@ -3,6 +3,7 @@ import boto3
 from botocore.exceptions import ClientError
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.resource import ResourceManagementClient
+from azure.mgmt.compute import ComputeManagementClient
 from azure.core.exceptions import AzureError
 import logging
 import traceback
@@ -10,6 +11,8 @@ from config import Config
 
 app = Flask(__name__)
 logging.basicConfig(level=Config.LOG_LEVEL)
+
+# Existing AWS functions
 
 def get_s3_buckets():
     try:
@@ -37,6 +40,23 @@ def get_ec2_instances():
         logging.error(f"AWS EC2 Error: {e}")
         return []
 
+# New AWS Lambda function
+
+def get_lambda_functions():
+    try:
+        lambda_client = boto3.client('lambda', **Config.get_aws_config())
+        response = lambda_client.list_functions()
+        return [{
+            'FunctionName': function['FunctionName'],
+            'Runtime': function['Runtime'],
+            'MemorySize': function['MemorySize']
+        } for function in response['Functions']]
+    except ClientError as e:
+        logging.error(f"AWS Lambda Error: {e}")
+        return []
+
+# Existing Azure function
+
 def get_azure_resource_groups():
     try:
         azure_config = Config.get_azure_config()
@@ -46,6 +66,23 @@ def get_azure_resource_groups():
         return [group.name for group in groups]
     except AzureError as e:
         logging.error(f"Azure Error: {e}")
+        return []
+
+# New Azure VM function
+
+def get_azure_vms():
+    try:
+        azure_config = Config.get_azure_config()
+        credential = DefaultAzureCredential()
+        compute_client = ComputeManagementClient(credential, azure_config['subscription_id'])
+        vms = list(compute_client.virtual_machines.list_all())
+        return [{
+            'name': vm.name,
+            'location': vm.location,
+            'vm_size': vm.hardware_profile.vm_size
+        } for vm in vms]
+    except AzureError as e:
+        logging.error(f"Azure VM Error: {e}")
         return []
 
 @app.route('/')
@@ -67,7 +104,15 @@ def aws_resources():
     return jsonify({
         'S3_Buckets': get_s3_buckets(),
         'EC2_Instances': get_ec2_instances(),
+        'Lambda_Functions': get_lambda_functions(),
         'Regions': [region['RegionName'] for region in boto3.client('ec2', **Config.get_aws_config()).describe_regions()['Regions']]
+    })
+
+@app.route('/azure-resources')
+def azure_resources():
+    return jsonify({
+        'Resource_Groups': get_azure_resource_groups(),
+        'Virtual_Machines': get_azure_vms()
     })
 
 @app.route('/multi-cloud-resources')
@@ -76,9 +121,11 @@ def multi_cloud_resources():
         aws_resources = {
             'S3_Buckets': get_s3_buckets(),
             'EC2_Instances': get_ec2_instances(),
+            'Lambda_Functions': get_lambda_functions()
         }
         azure_resources = {
-            'Resource_Groups': get_azure_resource_groups()
+            'Resource_Groups': get_azure_resource_groups(),
+            'Virtual_Machines': get_azure_vms()
         }
         return jsonify({
             'AWS': aws_resources,

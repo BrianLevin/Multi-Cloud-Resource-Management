@@ -3,5 +3,6 @@ flask
 boto3
 azure-identity
 azure-mgmt-resource
+azure-mgmt-compute
 python-dotenv
 Werkzeug
