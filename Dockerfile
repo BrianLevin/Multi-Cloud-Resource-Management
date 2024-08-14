@@ -15,4 +15,4 @@ COPY app.py .
 COPY config.py .
 
 # Specify the command to run the application
-CMD ["python", "app.py"]
+CMD ["hypercorn", "app:app", "--bind", "0.0.0.0:5000"]

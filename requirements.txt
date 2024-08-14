@@ -1,8 +1,11 @@
 # requirements.txt
 flask
-boto3
+aiobotocore
 azure-identity
 azure-mgmt-resource
 azure-mgmt-compute
 python-dotenv
+aiohttp
+hypercorn
+asgiref
 Werkzeug
