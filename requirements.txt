@@ -8,4 +8,6 @@ python-dotenv
 aiohttp
 hypercorn
 asgiref
+gunicorn
+uvicorn
 Werkzeug
