@@ -1,12 +1,12 @@
 import asyncio
-from flask import Flask, jsonify, send_from_directory
+from quart import Quart, jsonify, send_from_directory
 from aiobotocore.session import get_session
 from azure.identity.aio import DefaultAzureCredential
 from azure.mgmt.resource.resources.aio import ResourceManagementClient
 from azure.mgmt.compute.aio import ComputeManagementClient
 from config import Config
 
-app = Flask(__name__, static_folder='../build', static_url_path='/')
+app = Quart(__name__, static_folder='../build', static_url_path='/')
 
 async def get_aws_resources():
     session = get_session()
@@ -67,8 +67,8 @@ async def get_azure_resources():
     }
 
 @app.route('/')
-def serve():
-    return send_from_directory(app.static_folder, 'index.html')
+async def serve():
+    return await send_from_directory(app.static_folder, 'index.html')
 
 @app.route('/multi-cloud-resources')
 async def multi_cloud_resources():
@@ -81,5 +81,5 @@ async def multi_cloud_resources():
         'Azure': azure_resources
     })
 
-# if __name__ == '__main__':
-#     app.run(host='0.0.0.0', port=5000, debug=True)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)

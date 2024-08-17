@@ -1,5 +1,5 @@
 # requirements.txt
-flask
+quart
 aiobotocore
 azure-identity
 azure-mgmt-resource
