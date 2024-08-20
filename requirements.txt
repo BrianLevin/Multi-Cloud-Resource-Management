@@ -10,4 +10,6 @@ hypercorn
 asgiref
 gunicorn
 uvicorn
+pytest
+pytest-asyncio
 Werkzeug
